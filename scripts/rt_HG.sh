@@ -22,11 +22,12 @@ export HF_HOME="/groups/gag51395/fujii/hf_cache"
 
 source .venv/bin/activate
 
-MODEL_NAME="meta-llama/Meta-Llama-3.1-8B"
+MODEL_NAME="tokyotech-llm/Llama-3.1-8B-swallow-code-v2-exp8-iter0002500"
 
 export CUDA_VISIBLE_DEVICES=0
 evalplus.evaluate --model $MODEL_NAME \
                   --dataset humaneval \
                   --backend vllm      \
                   --tp 1              \
-                  --greedy
+                  --greedy            \
+                  --force-base-prompt

@@ -4,6 +4,9 @@ from typing import List
 EOS = [
     "<|endoftext|>",
     "<|endofmask|>",
+    "<|end_of_text|>",
+    "<|eom_id|>",
+    "<|eot_id|>",
     "</s>",
     "\nif __name__",
     "\ndef main(",
