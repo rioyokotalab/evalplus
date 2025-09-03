@@ -38,6 +38,49 @@ from evalplus.gen.util import trusted_exec
 # 2nd item (optional): the detailed pass/fail boolean for each input
 Result = Tuple[str, List[bool]]
 
+import csv, os
+
+def update_scores_row(all_result_path: str, model: str, col_index: int, task: str, score, overwrite_header: bool = False):
+    if col_index < 1:
+        raise ValueError("col_index は 1 以上を指定してください（1 列目は 'model'）。")
+
+    header, rows = [], []
+    if os.path.exists(all_result_path):
+        with open(all_result_path, "r", newline="", encoding="utf-8") as f:
+            r = list(csv.reader(f))
+            if r:
+                header, rows = r[0], r[1:]
+    if not header:
+        header = []
+    if len(header) < col_index:
+        header.extend([""] * (col_index - len(header)))
+    header[0] = "model"
+    tgt = col_index - 1  # 0-based index
+    if header[tgt] in ("", task) or overwrite_header:
+        header[tgt] = task
+    else:
+        print(f"This column {col_index} is already existed! {header[tgt]}")
+    row = None
+    for r in rows:
+        if r and r[0] == model:
+            row = r
+            break
+    if row is None:
+        row = [""]
+        row[0] = model
+        rows.append(row)
+    if len(row) < len(header):
+        row.extend([""] * (len(header) - len(row)))
+    row[tgt] = str(score)
+    for r in rows:
+        if len(r) < len(header):
+            r.extend([""] * (len(header) - len(r)))
+    os.makedirs(os.path.dirname(all_result_path) or ".", exist_ok=True)
+    with open(all_result_path, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(header)
+        w.writerows(rows)
+
 
 def get_groundtruth(problems, hashcode, tasks_only_output_not_none):
     cache_file = os.path.join(CACHE_DIR, f"{hashcode}.pkl")
@@ -138,6 +181,7 @@ def evaluate(
     version: str = "default",
     output_file: Optional[str] = None,
     gguf_file: Optional[str] = None,
+    all_result_csv = None,
     **model_kwargs,
 ):
     if model_kwargs:
@@ -332,6 +376,8 @@ def evaluate(
     cprint(f"{dataset} (base tests)", "red")
     for k, v in pass_at_k.items():
         cprint(f"{k}:\t{v:.3f}", "red")
+        if all_result_csv and k == "pass@1":
+            update_scores_row(all_result_csv, model_kwargs["model"], 2, f"{dataset}", f"{v:.3f}")
     results["pass_at_k"] = {"base": pass_at_k}
 
     if new_correct:
@@ -343,6 +389,8 @@ def evaluate(
         }
         for k, v in pass_at_k.items():
             cprint(f"{k}:\t{v:.3f}", "green")
+            if all_result_csv and k == "pass@1":
+                update_scores_row(all_result_csv, model_kwargs["model"], 3, f"{dataset}+", f"{v:.3f}")
         results["pass_at_k"]["plus"] = pass_at_k
 
     # save results
@@ -364,6 +412,7 @@ def evaluate(
         with open(result_path, "w") as f:
             json.dump(results, f)
 
+    
 
 def main():
     from fire import Fire
