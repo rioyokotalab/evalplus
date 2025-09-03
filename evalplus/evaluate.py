@@ -59,7 +59,7 @@ def update_scores_row(all_result_path: str, model: str, col_index: int, task: st
     if header[tgt] in ("", task) or overwrite_header:
         header[tgt] = task
     else:
-        print(f"This column {column} is already existed! {header[tgt]}")
+        print(f"This column {col_index} is already existed! {header[tgt]}")
     row = None
     for r in rows:
         if r and r[0] == model:
@@ -377,7 +377,7 @@ def evaluate(
     for k, v in pass_at_k.items():
         cprint(f"{k}:\t{v:.3f}", "red")
         if all_result_csv and k == "pass@1":
-            update_scores_row(all_result_csv, model_kwargs["model"], 2, "{dataset}", v:.3f)
+            update_scores_row(all_result_csv, model_kwargs["model"], 2, f"{dataset}", f"{v:.3f}")
     results["pass_at_k"] = {"base": pass_at_k}
 
     if new_correct:
@@ -390,7 +390,7 @@ def evaluate(
         for k, v in pass_at_k.items():
             cprint(f"{k}:\t{v:.3f}", "green")
             if all_result_csv and k == "pass@1":
-                update_scores_row(all_result_csv, model_kwargs["model"], 3, "{dataset}+", v:.3f)
+                update_scores_row(all_result_csv, model_kwargs["model"], 3, f"{dataset}+", f"{v:.3f}")
         results["pass_at_k"]["plus"] = pass_at_k
 
     # save results
